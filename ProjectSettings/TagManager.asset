@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Killbox
+  - Exit
+  - SawSpawner
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - Camera
+  - Triggers
+  - Player
+  - Saw
+  - Shake
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Background
+    uniqueID: 6393749
+    locked: 0
+  - name: MidGround
+    uniqueID: 2939033585
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Entities
+    uniqueID: 1463812865
+    locked: 0
+  - name: SFX
+    uniqueID: 995917501
+    locked: 0
+  - name: Foreground
+    uniqueID: 3359142719
+    locked: 0
+  - name: UI
+    uniqueID: 2566642627
+    locked: 0
