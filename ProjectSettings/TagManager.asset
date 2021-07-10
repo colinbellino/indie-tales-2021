@@ -3,10 +3,7 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags:
-  - Killbox
-  - Exit
-  - SawSpawner
+  tags: []
   layers:
   - Default
   - TransparentFX
@@ -14,11 +11,11 @@ TagManager:
   - 
   - Water
   - UI
-  - Camera
   - Triggers
+  - OneWayPlatforms
   - Player
-  - Saw
-  - Shake
+  - 
+  - 
   - 
   - 
   - 
@@ -42,23 +39,8 @@ TagManager:
   - 
   m_SortingLayers:
   - name: Background
-    uniqueID: 6393749
-    locked: 0
-  - name: MidGround
-    uniqueID: 2939033585
+    uniqueID: 37508923
     locked: 0
   - name: Default
     uniqueID: 0
-    locked: 0
-  - name: Entities
-    uniqueID: 1463812865
-    locked: 0
-  - name: SFX
-    uniqueID: 995917501
-    locked: 0
-  - name: Foreground
-    uniqueID: 3359142719
-    locked: 0
-  - name: UI
-    uniqueID: 2566642627
     locked: 0
