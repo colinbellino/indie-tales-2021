@@ -1,172 +1,191 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Game.Core.StateMachines.Game
 {
-    public class GameGameplayState : BaseGameState
-    {
-        private bool _confirmWasPressedThisFrame;
-        private bool _cancelWasPressedThisFrame;
+	public class GameGameplayState : BaseGameState
+	{
+		private bool _confirmWasPressedThisFrame;
+		private bool _cancelWasPressedThisFrame;
 
-        public GameGameplayState(GameFSM fsm, GameSingleton game) : base(fsm, game) { }
+		public GameGameplayState(GameFSM fsm, GameSingleton game) : base(fsm, game) { }
 
-        public override async UniTask Enter()
-        {
-            await base.Enter();
+		public override async UniTask Enter()
+		{
+			await base.Enter();
 
-            _state.Player = GameObject.Find("Player").GetComponent<Entity>();
+			_state.Player = GameObject.Find("Player").GetComponent<Entity>();
 
-            _ui.ShowDebug();
-            _ = _ui.FadeOut();
+			_ui.ShowDebug();
+			_ = _ui.FadeOut();
 
-            _controls.Gameplay.Enable();
-            _controls.Gameplay.Confirm.started += ConfirmStarted;
-            _controls.Gameplay.Cancel.started += CancelStarted;
-        }
+			_controls.Gameplay.Enable();
+			_controls.Gameplay.Confirm.started += ConfirmStarted;
+			_controls.Gameplay.Cancel.started += CancelStarted;
+		}
 
-        public override void Tick()
-        {
-            base.Tick();
+		public override void Tick()
+		{
+			base.Tick();
 
-            var moveInput = _controls.Gameplay.Move.ReadValue<Vector2>();
+			var moveInput = _controls.Gameplay.Move.ReadValue<Vector2>();
 
-            if (_state.Player != null)
-            {
-                var entity = _state.Player;
+			if (_state.Player != null)
+			{
+				HandleInput(_state.Player, moveInput, _confirmWasPressedThisFrame);
+			}
 
-                if (entity.Controller.isGrounded)
-                {
-                    entity.Velocity.y = 0;
-                }
+			GameObject.Find("end").transform.position = _state.Player.transform.position;
 
-                if (Time.time >= entity.DigAnimationEndTimestamp)
-                {
-                    if (moveInput.x > 0f)
-                    {
-                        entity.NormalizedHorizontalSpeed = 1;
-                        if (entity.transform.localScale.x < 0f)
-                        {
-                            entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
-                        }
+			// if (Keyboard.current.f1Key.wasPressedThisFrame)
+			// {
+			// 	_fsm.Fire(GameFSM.Triggers.NextLevel);
+			// }
 
-                        if (entity.Controller.isGrounded)
-                        {
-                            entity.Animator?.Play(Animator.StringToHash("Run"));
-                            // if (Time.time > _stepSoundTimestamp)
-                            // {
-                            //     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
-                            //     entity.AudioSource.clip = clip;
-                            //     entity.AudioSource.Play();
-                            //     _stepSoundTimestamp = Time.time + 0.2f;
-                            // }
-                        }
+			// if (Keyboard.current.f2Key.wasPressedThisFrame)
+			// {
+			// 	_fsm.Fire(GameFSM.Triggers.Lost);
+			// }
 
-                        entity.DigDirection = new Vector3Int(1, 0, 0);
-                    }
-                    else if (moveInput.x < 0f)
-                    {
-                        entity.NormalizedHorizontalSpeed = -1;
-                        if (entity.transform.localScale.x > 0f)
-                        {
-                            entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
-                        }
+			_confirmWasPressedThisFrame = false;
+			_cancelWasPressedThisFrame = false;
+		}
 
-                        if (entity.Controller.isGrounded)
-                        {
-                            entity.Animator?.Play(Animator.StringToHash("Run"));
-                            // if (Time.time > _stepSoundTimestamp)
-                            // {
-                            //     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
-                            //     entity.AudioSource.clip = clip;
-                            //     entity.AudioSource.Play();
-                            //     _stepSoundTimestamp = Time.time + 0.2f;
-                            // }
-                        }
+		public override async UniTask Exit()
+		{
+			await base.Exit();
 
-                        entity.DigDirection = new Vector3Int(-1, 0, 0);
-                    }
-                    else
-                    {
-                        entity.NormalizedHorizontalSpeed = 0;
+			_controls.Gameplay.Disable();
+			_controls.Gameplay.Confirm.started -= ConfirmStarted;
+			_controls.Gameplay.Cancel.started -= CancelStarted;
+		}
 
-                        if (entity.Controller.isGrounded)
-                        {
-                            entity.Animator?.Play(Animator.StringToHash("Idle"));
-                        }
+		private void ConfirmStarted(InputAction.CallbackContext context) => _confirmWasPressedThisFrame = true;
 
-                        if (entity.transform.localScale.x > 0)
-                        {
-                            entity.DigDirection = new Vector3Int(1, 0, 0);
-                        }
-                        else
-                        {
-                            entity.DigDirection = new Vector3Int(-1, 0, 0);
-                        }
-                    }
+		private void CancelStarted(InputAction.CallbackContext context) => _cancelWasPressedThisFrame = true;
 
-                    // JUMP
-                    if (_confirmWasPressedThisFrame && entity.Controller.isGrounded)
-                    {
-                        entity.Velocity.y = Mathf.Sqrt(2f * entity.JumpHeight * -entity.Gravity);
-                        // _audioPlayer.PlaySoundEffect(_config.JumpClip, entity.transform.position, 0.4f);
-                        entity.Animator?.Play(Animator.StringToHash("Jump"));
-                    }
+		private static void HandleInput(Entity entity, Vector2 moveInput, bool confirmWasPressedThisFrame)
+		{
+			if (entity.Controller.isGrounded)
+			{
+				entity.Velocity.y = 0;
+			}
 
-                    // apply horizontal speed smoothing it. dont really do this with Lerp. Use SmoothDamp or something that provides more control
-                    var smoothedMovementFactor = entity.Controller.isGrounded ? entity.GroundDamping : entity.InAirDamping; // how fast do we change direction?
-                    entity.Velocity.x = Mathf.Lerp(entity.Velocity.x, entity.NormalizedHorizontalSpeed * entity.RunSpeed, Time.deltaTime * smoothedMovementFactor);
-                }
-                else
-                {
-                    entity.Velocity.x = 0;
-                }
+			if (Time.time >= entity.DigAnimationEndTimestamp)
+			{
+				if (moveInput.x > 0f)
+				{
+					entity.NormalizedHorizontalSpeed = 1;
+					if (entity.transform.localScale.x < 0f)
+					{
+						entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
+					}
 
-                if (entity.Velocity.y < 0)
-                {
-                    entity.Animator?.Play(Animator.StringToHash("Fall"));
-                }
+					if (entity.Controller.isGrounded)
+					{
+						entity.Animator?.Play(Animator.StringToHash("Run"));
+						// if (Time.time > _stepSoundTimestamp)
+						// {
+						//     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
+						//     entity.AudioSource.clip = clip;
+						//     entity.AudioSource.Play();
+						//     _stepSoundTimestamp = Time.time + 0.2f;
+						// }
+					}
 
-                if (Time.time >= entity.StartDiggingTimestamp && entity.StartDiggingTimestamp > 0)
-                {
-                    entity.StartDiggingTimestamp = 0;
-                    // PlayerDig(entity);
-                }
+					entity.DigDirection = new Vector3Int(1, 0, 0);
+				}
+				else if (moveInput.x < 0f)
+				{
+					entity.NormalizedHorizontalSpeed = -1;
+					if (entity.transform.localScale.x > 0f)
+					{
+						entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
+					}
 
-                // apply gravity before moving
-                entity.Velocity.y += entity.Gravity * Time.deltaTime;
+					if (entity.Controller.isGrounded)
+					{
+						entity.Animator?.Play(Animator.StringToHash("Run"));
+						// if (Time.time > _stepSoundTimestamp)
+						// {
+						//     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
+						//     entity.AudioSource.clip = clip;
+						//     entity.AudioSource.Play();
+						//     _stepSoundTimestamp = Time.time + 0.2f;
+						// }
+					}
 
-                entity.Controller.move(entity.Velocity * Time.deltaTime);
+					entity.DigDirection = new Vector3Int(-1, 0, 0);
+				}
+				else
+				{
+					entity.NormalizedHorizontalSpeed = 0;
 
-                // grab our current entity.Velocity to use as a base for all calculations
-                entity.Velocity = entity.Controller.velocity;
-            }
+					if (entity.Controller.isGrounded)
+					{
+						entity.Animator?.Play(Animator.StringToHash("Idle"));
+					}
 
-            if (Keyboard.current.f1Key.wasPressedThisFrame)
-            {
-                _fsm.Fire(GameFSM.Triggers.NextLevel);
-            }
+					if (entity.transform.localScale.x > 0)
+					{
+						entity.DigDirection = new Vector3Int(1, 0, 0);
+					}
+					else
+					{
+						entity.DigDirection = new Vector3Int(-1, 0, 0);
+					}
+				}
 
-            if (Keyboard.current.f2Key.wasPressedThisFrame)
-            {
-                _fsm.Fire(GameFSM.Triggers.Lost);
-            }
+				// JUMP or Go down a platform
+				if (confirmWasPressedThisFrame && entity.Controller.isGrounded && moveInput.y >= 0f)
+				{
+					entity.Velocity.y = Mathf.Sqrt(2f * entity.JumpHeight * -entity.Gravity);
+					// _audioPlayer.PlaySoundEffect(_config.JumpClip, entity.transform.position, 0.4f);
+					entity.Animator?.Play(Animator.StringToHash("Jump"));
+				}
 
-            _confirmWasPressedThisFrame = false;
-            _cancelWasPressedThisFrame = false;
-        }
+				// apply horizontal speed smoothing it. dont really do this with Lerp. Use SmoothDamp or something that provides more control
+				var smoothedMovementFactor = entity.Controller.isGrounded ? entity.GroundDamping : entity.InAirDamping; // how fast do we change direction?
+				entity.Velocity.x = Mathf.Lerp(entity.Velocity.x, entity.NormalizedHorizontalSpeed * entity.RunSpeed, Time.deltaTime * smoothedMovementFactor);
+			}
+			else
+			{
+				entity.Velocity.x = 0;
+			}
 
-        public override async UniTask Exit()
-        {
-            await base.Exit();
+			if (Time.time >= entity.StartDiggingTimestamp && entity.StartDiggingTimestamp > 0)
+			{
+				entity.StartDiggingTimestamp = 0;
+				// PlayerDig(entity);
+			}
 
-            _controls.Gameplay.Disable();
-            _controls.Gameplay.Confirm.started -= ConfirmStarted;
-            _controls.Gameplay.Cancel.started -= CancelStarted;
-        }
+			// apply gravity before moving
+			entity.Velocity.y += entity.Gravity * Time.deltaTime;
 
-        private void ConfirmStarted(InputAction.CallbackContext context) => _confirmWasPressedThisFrame = true;
+			// if holding down bump up our movement amount and turn off one way platform detection for a frame.
+			// this lets us jump down through one way platforms
+			if (entity.Controller.isGrounded && confirmWasPressedThisFrame && moveInput.y < 0f)
+			{
+				entity.Controller.fallingThroughPlatformTimestamp = Time.time + 0.2f;
+			}
 
-        private void CancelStarted(InputAction.CallbackContext context) => _cancelWasPressedThisFrame = true;
-    }
+			if (entity.Velocity.y < 0 && Time.time < entity.Controller.fallingThroughPlatformTimestamp)
+			{
+				// entity.Velocity.y *= entity.Gravity * Time.deltaTime;
+				entity.Controller.ignoreOneWayPlatformsThisFrame = true;
+			}
+
+			entity.Controller.move(entity.Velocity * Time.deltaTime);
+
+			// grab our current entity.Velocity to use as a base for all calculations
+			entity.Velocity = entity.Controller.velocity;
+
+			if (entity.Velocity.y < 0)
+			{
+				entity.Animator?.Play(Animator.StringToHash("Fall"));
+			}
+		}
+	}
 }
