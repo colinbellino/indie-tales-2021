@@ -1,4 +1,6 @@
-﻿namespace Game.Core
+﻿using UnityEngine;
+
+namespace Game.Core
 {
     public class GameState
     {
@@ -6,7 +8,11 @@
         public float CurrentMusicVolume;
         public float InitialSoundVolume;
         public float CurrentSoundVolume;
-
         public Entity Player;
+        public Entity[] Birds;
+        public Unity.Mathematics.Random Random;
+        public Transform[] RopeTargets;
+        public GameObject[] Ropes;
+        public int CurrentRopeIndex;
     }
 }
