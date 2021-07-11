@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3156947a33fcf6f488d7b0c0ff54ce05
+guid: b5f48680d0a988e448597899e2fad9f8
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8921808055746420439
-    second: birb0
+      213: -7237882158719921107
+    second: temp-bg0
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -49,7 +49,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 128
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -82,13 +82,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: birb0
+      name: temp-bg0
       rect:
         serializedVersion: 2
         x: 1
         y: 1
-        width: 256
-        height: 256
+        width: 512
+        height: 288
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -96,8 +96,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 9212403d7de5f2480800000000000000
-      internalID: -8921808055746420439
+      spriteID: d249c5b4680ed8b90800000000000000
+      internalID: -7237882158719921107
       vertices: []
       indices: 
       edges: []

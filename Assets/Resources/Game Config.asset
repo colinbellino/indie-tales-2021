@@ -12,64 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d9faba923454a5cad26655791da1fbd, type: 3}
   m_Name: Game Config
   m_EditorClassIdentifier: 
-  PlayerPrefab: {fileID: 4641049481721966404, guid: 59f9ad7a458b4844e9ac659f97fe6cc4, type: 3}
-  WallOfDeathPrefab: {fileID: -2534250066095687303, guid: a971576391850224db49fe7182193c17, type: 3}
-  Levels:
-  - SceneName: Intro
-    WallOfDeathStartPosition: {x: 0, y: 0, z: 0}
-    Safe: 1
-    Music: {fileID: 8300000, guid: 12dce435ca0bf9d4490f875185b226c0, type: 3}
-    MusicVolume: 0.8
-  - SceneName: Level1
-    WallOfDeathStartPosition: {x: 0, y: 12, z: 0}
-    Safe: 0
-    Music: {fileID: 8300000, guid: 918ce2171e16a22429295bbc445daa90, type: 3}
-    MusicVolume: 1
-  - SceneName: Safe1
-    WallOfDeathStartPosition: {x: 0, y: 0, z: 0}
-    Safe: 1
-    Music: {fileID: 8300000, guid: 48037ba22283ce54ba2177d6278e8622, type: 3}
-    MusicVolume: 0.8
-  - SceneName: Level2
-    WallOfDeathStartPosition: {x: 0, y: 12, z: 0}
-    Safe: 0
-    Music: {fileID: 8300000, guid: 95472d7248b32f6429d78bbbd10c3131, type: 3}
-    MusicVolume: 1
-  - SceneName: Safe2
-    WallOfDeathStartPosition: {x: 0, y: 12, z: 0}
-    Safe: 1
-    Music: {fileID: 8300000, guid: 48037ba22283ce54ba2177d6278e8622, type: 3}
-    MusicVolume: 1
-  - SceneName: Level3
-    WallOfDeathStartPosition: {x: 0, y: 12, z: 0}
-    Safe: 0
-    Music: {fileID: 8300000, guid: 95472d7248b32f6429d78bbbd10c3131, type: 3}
-    MusicVolume: 1
-  - SceneName: Level4
-    WallOfDeathStartPosition: {x: 0, y: 12, z: 0}
-    Safe: 0
-    Music: {fileID: 8300000, guid: 482183cf72528324a970e42df0e8a293, type: 3}
-    MusicVolume: 1
-  Tiles:
-  - Tile: {fileID: 11400000, guid: 4c6a97854c0d37441844edbe56e4ebdc, type: 2}
-    Breakable: 0
-    HitsToBreak: 0
-  - Tile: {fileID: 11400000, guid: c1307eae14c99b9479afb47da74819f4, type: 2}
-    Breakable: 1
-    HitsToBreak: 1
-  - Tile: {fileID: 11400000, guid: d5d80f35ada04964a88cb08577aca91e, type: 2}
-    Breakable: 1
-    HitsToBreak: 2
-  - Tile: {fileID: 11400000, guid: 91b98a6e7a1702047813b062b45941d0, type: 2}
-    Breakable: 1
-    HitsToBreak: 3
-  - Tile: {fileID: 11400000, guid: 88150590973ba403e9765efd7693bc9e, type: 2}
-    Breakable: 1
-    HitsToBreak: 1
-  DamageOverlays:
-  - {fileID: 11400000, guid: e1a3f25c53872ea46ac46f8e06a904df, type: 2}
-  - {fileID: 11400000, guid: 2cdaca25ca0dda64f90f78d520f7e4fc, type: 2}
-  - {fileID: 11400000, guid: 5871b654944e4f74cb25881223ebdac3, type: 2}
+  DebugFSM: 0
+  LockFPS: 60
   AudioMixer: {fileID: 24100000, guid: c00711887b3714031932c58a1ac16396, type: 2}
   MusicAudioMixerGroup: {fileID: -1804572004088458924, guid: c00711887b3714031932c58a1ac16396, type: 2}
   SoundsAudioMixerGroup: {fileID: 3053297684183750015, guid: c00711887b3714031932c58a1ac16396, type: 2}
@@ -77,27 +21,5 @@ MonoBehaviour:
   PauseAudioSnapshot: {fileID: 6893898828190700123, guid: c00711887b3714031932c58a1ac16396, type: 2}
   MusicVolume: 0.85
   SoundVolume: 1
-  MenuTextAppearClip: {fileID: 8300000, guid: 0716cfff5c54dd542a774a3995d00888, type: 3}
+  MenuTextAppearClip: {fileID: 8300000, guid: ea617f6da27fb4c67a099b74da43a20e, type: 3}
   MenuConfirmClip: {fileID: 8300000, guid: 4c1368389c5532e4faa388da887d74e9, type: 3}
-  DigClips:
-  - {fileID: 8300000, guid: f33dc4e22b0b7fe44a933f6423c49a10, type: 3}
-  - {fileID: 8300000, guid: d5acd1ace53ce0b4bbe1b0e91d230f19, type: 3}
-  - {fileID: 8300000, guid: 62a5aaf359310f04c88b2b56bb365bc0, type: 3}
-  ClingClips:
-  - {fileID: 8300000, guid: c35ef79f9adb46c4492aa7553324fd4d, type: 3}
-  DeathClips:
-  - {fileID: 8300000, guid: c86c6088a8eee664d9a2b4718092343c, type: 3}
-  - {fileID: 8300000, guid: 26299998302d18a4aaeaa9c75d1a8081, type: 3}
-  QuackClips:
-  - {fileID: 8300000, guid: b0e9abe817d14c247bc0973d6fa1671d, type: 3}
-  - {fileID: 8300000, guid: 5719627a0eee4044cb51710eb60439fe, type: 3}
-  - {fileID: 8300000, guid: 9d8ab6d5e7a8261428c0b1936d01e352, type: 3}
-  FootstepClips:
-  - {fileID: 8300000, guid: 35158c6023ac04b4b9afff545131da7a, type: 3}
-  - {fileID: 8300000, guid: f1806d3c6ec3a9d40a2dbf080c9ed9c2, type: 3}
-  - {fileID: 8300000, guid: da8dcd909099cd34585068d530fa421b, type: 3}
-  - {fileID: 8300000, guid: e5845bd3eb76ecd4995440cb6ddb353a, type: 3}
-  - {fileID: 8300000, guid: 87b9f715da87bda458ad8dc24b21b191, type: 3}
-  - {fileID: 8300000, guid: 2d0cdd9fd2a5c9a448be80bc4ce1a414, type: 3}
-  JumpClip: {fileID: 8300000, guid: 40a7ce0bd6789c04381df5bd02e08949, type: 3}
-  TileBreakEffectPrefab: {fileID: 424922526298368555, guid: 78a118aa02bbe6c44a907806ca82989b, type: 3}
