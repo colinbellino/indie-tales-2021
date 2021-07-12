@@ -17,8 +17,10 @@ namespace Game.Core
 		public AudioMixerSnapshot DefaultAudioSnapshot;
 		public AudioMixerSnapshot PauseAudioSnapshot;
 		[Range(0f, 1f)] public float MusicVolume = 1f;
+		public AudioClip Music1Clip;
 		[Range(0f, 1f)] public float SoundVolume = 1f;
 		public AudioClip MenuTextAppearClip;
 		public AudioClip MenuConfirmClip;
+		public AudioClip PlayerDeathClip;
 	}
 }

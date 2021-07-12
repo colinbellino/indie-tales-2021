@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
@@ -6,339 +6,452 @@ using UnityEngine.InputSystem;
 
 namespace Game.Core.StateMachines.Game
 {
-	public class GameGameplayState : BaseGameState
-	{
-		private bool _confirmWasPressedThisFrame;
-		private bool _cancelWasPressedThisFrame;
+    public class GameGameplayState : BaseGameState
+    {
+        private bool _confirmWasPressedThisFrame;
+        private bool _cancelWasPressedThisFrame;
 
-		public GameGameplayState(GameFSM fsm, GameSingleton game) : base(fsm, game) { }
+        private const float BIRD_SPAWN_DELAY = 2;
+        private const float BIRD_SPAWN_DELAY_MAX = 4;
+        private const int MAX_SCORE = 30;
 
-		public override async UniTask Enter()
-		{
-			await base.Enter();
+        public GameGameplayState(GameFSM fsm, GameSingleton game) : base(fsm, game) { }
 
-			var playerPrefab = Resources.Load<Entity>("Player");
-			_state.Player = GameObject.Instantiate(playerPrefab, GameObject.Find("Player Spawn").transform.position, Quaternion.identity);
+        public override async UniTask Enter()
+        {
+            await base.Enter();
 
-			_state.Random = new Unity.Mathematics.Random();
-			_state.Random.InitState((uint)UnityEngine.Random.Range(0, int.MaxValue));
+            var playerPrefab = Resources.Load<Entity>("Player");
+            _state.Player = GameObject.Instantiate(playerPrefab, GameObject.Find("Player Spawn").transform.position, Quaternion.identity);
 
-			_state.CurrentRopeIndex = 0;
+            var ropePrefab = Resources.Load<GameObject>("Rope");
+            var ropes = GameObject.FindGameObjectsWithTag("Rope Spawn");
+            _state.Ropes = new GameObject[ropes.Length];
+            for (int i = 0; i < ropes.Length; i++)
+            {
+                var rope = GameObject.Instantiate(ropePrefab, ropes[i].transform.position, Quaternion.identity);
+                rope.name = $"Rope {i}";
+                _state.Ropes[i] = rope;
+            }
 
-			var birdPrefab = Resources.Load<Entity>("Bird");
-			_state.Birds = new Entity[10];
+            _state.RopeTargets = new Transform[_state.Ropes.Length];
 
-			for (int birdIndex = 0; birdIndex < _state.Birds.Length; birdIndex++)
-			{
-				var bird = GameObject.Instantiate(birdPrefab);
-				bird.transform.position = new Vector3(99, 99);
-				bird.SpawnTimestamp = Time.time + 2f * birdIndex;
-				_state.Birds[birdIndex] = bird;
-			}
+            await UniTask.Delay(1500); // Wait for the rope physics to calm down a little
 
-			var ropePrefab = Resources.Load<GameObject>("Rope");
-			var ropes = GameObject.FindGameObjectsWithTag("Rope Spawn");
-			_state.Ropes = new GameObject[ropes.Length];
-			for (int i = 0; i < ropes.Length; i++)
-			{
-				var rope = GameObject.Instantiate(ropePrefab, ropes[i].transform.position, Quaternion.identity);
-				_state.Ropes[i] = rope;
-			}
+            _state.Random = new Unity.Mathematics.Random();
+            _state.Random.InitState((uint)UnityEngine.Random.Range(0, int.MaxValue));
 
-			_state.RopeTargets = new Transform[_state.Ropes.Length];
+            var birdSpots = GameObject.FindGameObjectsWithTag("Bird Spot");
+            _state.BirdSpots = new ShuffleBag<Vector3>(_state.Random);
+            foreach (var spot in birdSpots)
+            {
+                _state.BirdSpots.Add(spot.transform.position);
+            }
 
-			// _state.RopeTargets[0] = _state.Player.transform;
+            _state.Score = 0;
+            _state.BirdDoneCount = 0;
 
-			_ui.ShowDebug();
-			_ = _ui.FadeOut();
+            var birdPrefab = Resources.Load<Entity>("Bird");
+            _state.Birds = new Entity[MAX_SCORE];
 
-			_controls.Gameplay.Enable();
-			_controls.Gameplay.Confirm.started += ConfirmStarted;
-			_controls.Gameplay.Cancel.started += CancelStarted;
-		}
+            var spawnTime = Time.time;
+            for (int birdIndex = 0; birdIndex < _state.Birds.Length; birdIndex++)
+            {
+                var bird = GameObject.Instantiate(birdPrefab);
+                bird.transform.position = new Vector3(99, 99);
+                bird.SpawnTimestamp = spawnTime + _state.Random.NextFloat(BIRD_SPAWN_DELAY, BIRD_SPAWN_DELAY_MAX);
+                _state.Birds[birdIndex] = bird;
+                spawnTime = bird.SpawnTimestamp;
+            }
 
-		public override void Tick()
-		{
-			base.Tick();
+            if (_config.Music1Clip && _audioPlayer.IsMusicPlaying() == false && _audioPlayer.IsCurrentMusic(_config.Music1Clip) == false)
+            {
+                _ = _audioPlayer.PlayMusic(_config.Music1Clip, true, 0.5f);
+            }
 
-			if (_state.Player != null)
-			{
-				HandleInput(_state.Player);
-			}
+            _ = _ui.FadeOut();
 
-			for (int i = 0; i < _state.Ropes.Length; i++)
-			{
-				var end = _state.Ropes[i].transform.GetChild(_state.Ropes[i].transform.childCount - 1);
-				if (_state.RopeTargets[i] == null)
-				{
-					continue;
-				}
+            _state.Running = true;
 
-				end.position = _state.RopeTargets[i].position;
-			}
+            _controls.Gameplay.Enable();
+            _controls.Gameplay.Confirm.started += ConfirmStarted;
+            _controls.Gameplay.Cancel.started += CancelStarted;
+            _controls.Global.Enable();
+        }
 
-			foreach (var entity in _state.Birds)
-			{
-				if (entity.ControlledByAI == false)
-				{
-					continue;
-				}
+        public override void Tick()
+        {
+            base.Tick();
 
-				switch (entity.AIState)
-				{
-					case AIStates.WaitingToSpawn:
-						{
-							if (Time.time > entity.SpawnTimestamp)
-							{
-								// FIXME: Find a point on the ground instead of a totally random point
-								var randomPosition = new Vector3(
-									_state.Random.NextFloat(-12f, 12f),
-									_state.Random.NextFloat(0f, 6f)
-								);
-								entity.MoveDestination = randomPosition;
-								entity.StartMoveTimestamp = Time.time;
-								entity.transform.position = new Vector3(0, 17);
-								// UnityEngine.Debug.Log("moving to " + entity.MoveDestination);
-								entity.AIState = AIStates.MovingToDestination;
-							}
-						}
-						break;
+            if (_controls.Global.Pause.WasPerformedThisFrame())
+            {
+                if (Time.timeScale == 0f)
+                {
+                    Time.timeScale = 1f;
+                    _state.Running = true;
+                    _audioPlayer.ResumeMusic();
+                    _ui.HidePause();
 
-					case AIStates.MovingToDestination:
-						{
-							if (entity.Moving == false)
-							{
-								entity.transform.DOMove(entity.MoveDestination, 1 / entity.MoveSpeed).SetEase(Ease.OutExpo);
-								entity.Moving = true;
-							}
+                    Time.timeScale = _state.AssistMode ? 0.7f : 1f;
+                }
+                else
+                {
+                    Time.timeScale = 0f;
+                    _state.Running = false;
+                    _audioPlayer.PauseMusic();
+                    _ui.ShowPause();
+                }
+            }
 
-							var distance = Vector3.Distance(entity.transform.position, entity.MoveDestination);
-							if (distance < 0.1f)
-							{
-								entity.MoveDestination = Vector3.zero;
-								entity.FleeTimestamp = Time.time + 10f;
-								entity.Moving = false;
-								entity.AIState = AIStates.Idle;
-							}
-						}
-						break;
+            if (_state.Running == false)
+            {
+                return;
+            }
 
-					case AIStates.Idle:
-						{
-							var hits = Physics2D.OverlapCircleAll(entity.transform.position, entity.DetectionRadius);
-							foreach (var hit in hits)
-							{
-								if (hit.transform.gameObject.CompareTag("Player"))
-								{
-									var timestamp = Time.time + entity.FleeDelay;
-									if (timestamp < entity.FleeTimestamp)
-									{
-										entity.FleeTimestamp = timestamp;
-									}
+            if (_state.Player != null)
+            {
+                HandleInput(_state.Player);
+            }
 
-									break;
-								}
-							}
+            for (int i = 0; i < _state.Ropes.Length; i++)
+            {
+                var end = _state.Ropes[i].transform.GetChild(_state.Ropes[i].transform.childCount - 1);
+                if (_state.RopeTargets[i] == null)
+                {
+                    continue;
+                }
 
-							if (Time.time > entity.FleeTimestamp)
-							{
-								// TODO: Trigger detection anim
-								// TODO: Move away from the player and top
-								entity.MoveDestination = new Vector3(entity.transform.position.x, 17);
-								entity.AIState = AIStates.Fleeing;
-							}
-						}
-						break;
+                end.position = _state.RopeTargets[i].position;
+            }
 
-					case AIStates.Fleeing:
-						{
-							if (entity.Moving == false)
-							{
-								entity.transform.DOMove(entity.MoveDestination, 1 / entity.MoveSpeed).SetEase(Ease.InExpo);
-								entity.Moving = true;
-							}
-						}
-						break;
-				}
+            foreach (var entity in _state.Birds)
+            {
+                if (entity.ControlledByAI == false)
+                {
+                    continue;
+                }
 
-			}
+                switch (entity.AIState)
+                {
+                    case AIStates.WaitingToSpawn:
+                        {
+                            if (Time.time > entity.SpawnTimestamp)
+                            {
+                                entity.MoveDestination = _state.BirdSpots.Next();
+                                entity.StartMoveTimestamp = Time.time;
+                                entity.StartPosition = new Vector3(entity.MoveDestination.x > 0 ? 17 : -17, entity.MoveDestination.y + 2);
+                                entity.AIState = AIStates.MovingToDestination;
+                            }
+                        }
+                        break;
 
-			if (Keyboard.current.f1Key.wasPressedThisFrame)
-			{
-				_fsm.Fire(GameFSM.Triggers.NextLevel);
-			}
+                    case AIStates.MovingToDestination:
+                        {
+                            if (entity.Moving == false)
+                            {
+                                entity.transform.position = entity.StartPosition;
+                                entity.transform.DOMove(entity.MoveDestination, 1 / entity.MoveSpeed).SetEase(Ease.OutExpo);
+                                entity.Animator.Play("Fly");
+                                entity.SpriteRenderer.flipX = (entity.MoveDestination - entity.StartPosition).x < 0;
+                                entity.Moving = true;
+                            }
 
-			if (Keyboard.current.f2Key.wasPressedThisFrame)
-			{
-				_fsm.Fire(GameFSM.Triggers.Lost);
-			}
+                            var distance = Vector3.Distance(entity.transform.position, entity.MoveDestination);
+                            if (distance < 0.1f)
+                            {
+                                entity.MoveDestination = Vector3.zero;
+                                entity.FleeTimestamp = Time.time + entity.LeaveDelay;
+                                entity.Moving = false;
+                                entity.AIState = AIStates.Idle;
+                            }
+                        }
+                        break;
 
-			_confirmWasPressedThisFrame = false;
-			_cancelWasPressedThisFrame = false;
-		}
+                    case AIStates.Idle:
+                        {
+                            entity.Animator.Play("Idle");
 
-		public override async UniTask Exit()
-		{
-			await base.Exit();
+                            if (Time.time > entity.FleeTimestamp)
+                            {
+                                // TODO: Trigger detection anim
+                                // TODO: Move away from the player and top
+                                entity.StartPosition = entity.transform.position;
+                                entity.MoveDestination = new Vector3(entity.transform.position.x, 17);
+                                entity.AIState = AIStates.Fleeing;
+                            }
+                        }
+                        break;
 
-			_controls.Gameplay.Disable();
-			_controls.Gameplay.Confirm.started -= ConfirmStarted;
-			_controls.Gameplay.Cancel.started -= CancelStarted;
+                    case AIStates.Fleeing:
+                        {
+                            if (entity.Moving == false)
+                            {
+                                entity.transform.DOMove(entity.MoveDestination, 1 / entity.MoveSpeed / 1.5f);
+                                entity.Animator.Play("Fly");
+                                entity.SpriteRenderer.flipX = (entity.MoveDestination - entity.StartPosition).x < 0;
+                                entity.Moving = true;
+                            }
 
-			await _ui.FadeIn(Color.white);
+                            var distance = Vector3.Distance(entity.transform.position, entity.MoveDestination);
+                            if (distance < 0.1f)
+                            {
+                                entity.MoveDestination += new Vector3(0, 10f);
+                                entity.Moving = false;
+                                entity.AIState = AIStates.Captured;
+                            }
+                        }
+                        break;
 
-			foreach (var rope in _state.Ropes)
-			{
-				GameObject.Destroy(rope.gameObject);
-			}
-			foreach (var bird in _state.Birds)
-			{
-				GameObject.Destroy(bird.gameObject);
-			}
+                    case AIStates.Captured:
+                        {
+                            if (entity.Moving == false)
+                            {
+                                entity.transform.DOMove(entity.MoveDestination, 1 / entity.MoveSpeed / entity.FleeSpeedMultiplier);
+                                entity.Moving = true;
+                                _state.BirdDoneCount += 1;
+                            }
+                        }
+                        break;
+                }
+            }
 
-			GameObject.Destroy(_state.Player.gameObject);
-		}
+            if (_state.BirdDoneCount >= _state.Birds.Length)
+            {
+                Victory();
+            }
 
-		private void ConfirmStarted(InputAction.CallbackContext context) => _confirmWasPressedThisFrame = true;
+            _confirmWasPressedThisFrame = false;
+            _cancelWasPressedThisFrame = false;
 
-		private void CancelStarted(InputAction.CallbackContext context) => _cancelWasPressedThisFrame = true;
+            if (Utils.IsDevBuild())
+            {
+                if (Keyboard.current.f1Key.wasPressedThisFrame)
+                {
+                    Victory();
+                }
 
-		private void HandleInput(Entity entity)
-		{
-			var moveInput = _controls.Gameplay.Move.ReadValue<Vector2>();
+                if (Keyboard.current.f2Key.wasPressedThisFrame)
+                {
+                    Defeat();
+                }
+            }
+        }
 
-			if (entity.Controller.isGrounded)
-			{
-				entity.Velocity.y = 0;
-			}
+        public override async UniTask Exit()
+        {
+            await base.Exit();
 
-			var hits = Physics2D.OverlapCircleAll(entity.transform.position, entity.DetectionRadius);
+            _state.Running = false;
 
-			foreach (var hit in hits)
-			{
-				if (hit.CompareTag("Killbox"))
-				{
-					UnityEngine.Debug.Log("Player killed");
-					// TODO: Trigger death effect
-					_fsm.Fire(GameFSM.Triggers.Lost);
-					break;
-				}
-			}
+            _controls.Gameplay.Disable();
+            _controls.Gameplay.Confirm.started -= ConfirmStarted;
+            _controls.Gameplay.Cancel.started -= CancelStarted;
+            _controls.Global.Disable();
 
-			if (Time.time >= entity.AnimationTimestamp)
-			{
-				if (_cancelWasPressedThisFrame)
-				{
-					foreach (var hit in hits)
-					{
-						if (hit.CompareTag("Bird"))
-						{
-							UnityEngine.Debug.Log("attach to " + hit.transform);
-							_state.RopeTargets[_state.CurrentRopeIndex] = hit.transform;
+            await _ui.FadeIn(Color.white);
 
-							if (_state.CurrentRopeIndex < _state.Ropes.Length - 1)
-							{
-								_state.CurrentRopeIndex += 1;
-								// _state.RopeTargets[_state.CurrentRopeIndex] = _state.Player.transform;
-							}
+            foreach (var entity in _state.Ropes)
+            {
+                if (entity != null && entity.gameObject)
+                {
+                    GameObject.Destroy(entity.gameObject);
+                }
+            }
+            foreach (var entity in _state.Birds)
+            {
+                if (entity != null && entity.gameObject)
+                {
+                    GameObject.Destroy(entity.gameObject);
+                }
+            }
 
-							break;
-						}
-					}
-				}
+            GameObject.Destroy(_state.Player.gameObject);
+        }
 
-				if (moveInput.x > 0f)
-				{
-					entity.NormalizedHorizontalSpeed = 1;
-					if (entity.transform.localScale.x < 0f)
-					{
-						entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
-					}
+        private void ConfirmStarted(InputAction.CallbackContext context) => _confirmWasPressedThisFrame = true;
 
-					if (entity.Controller.isGrounded)
-					{
-						entity.Animator?.Play(Animator.StringToHash("Run"));
-						// if (Time.time > _stepSoundTimestamp)
-						// {
-						//     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
-						//     entity.AudioSource.clip = clip;
-						//     entity.AudioSource.Play();
-						//     _stepSoundTimestamp = Time.time + 0.2f;
-						// }
-					}
-				}
-				else if (moveInput.x < 0f)
-				{
-					entity.NormalizedHorizontalSpeed = -1;
-					if (entity.transform.localScale.x > 0f)
-					{
-						entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
-					}
+        private void CancelStarted(InputAction.CallbackContext context) => _cancelWasPressedThisFrame = true;
 
-					if (entity.Controller.isGrounded)
-					{
-						entity.Animator?.Play(Animator.StringToHash("Run"));
-						// if (Time.time > _stepSoundTimestamp)
-						// {
-						//     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
-						//     entity.AudioSource.clip = clip;
-						//     entity.AudioSource.Play();
-						//     _stepSoundTimestamp = Time.time + 0.2f;
-						// }
-					}
-				}
-				else
-				{
-					entity.NormalizedHorizontalSpeed = 0;
+        private void Victory()
+        {
+            _ = _audioPlayer.StopMusic();
+            _fsm.Fire(GameFSM.Triggers.Won);
+        }
 
-					if (entity.Controller.isGrounded)
-					{
-						entity.Animator?.Play(Animator.StringToHash("Idle"));
-					}
-				}
+        private async void Defeat()
+        {
+            var position = _state.Player.transform.position;
 
-				// JUMP or Go down a platform
-				if (_confirmWasPressedThisFrame && entity.Controller.isGrounded && moveInput.y >= 0f)
-				{
-					entity.Velocity.y = Mathf.Sqrt(2f * entity.JumpHeight * -entity.Gravity);
-					// _audioPlayer.PlaySoundEffect(_config.JumpClip, entity.transform.position, 0.4f);
-					entity.Animator?.Play(Animator.StringToHash("Jump"));
-				}
+            if (_config.PlayerDeathClip)
+            {
+                _ = _audioPlayer.PlaySoundEffect(_config.PlayerDeathClip);
+            }
 
-				// apply horizontal speed smoothing it. dont really do this with Lerp. Use SmoothDamp or something that provides more control
-				var smoothedMovementFactor = entity.Controller.isGrounded ? entity.GroundDamping : entity.InAirDamping; // how fast do we change direction?
-				entity.Velocity.x = Mathf.Lerp(entity.Velocity.x, entity.NormalizedHorizontalSpeed * entity.MoveSpeed, Time.deltaTime * smoothedMovementFactor);
-			}
-			else
-			{
-				entity.Velocity.x = 0;
-			}
+            // await UniTask.Delay(100);
 
-			if (entity.Velocity.y < 0)
-			{
-				entity.Animator?.Play(Animator.StringToHash("Fall"));
-			}
+            GameObject.Instantiate(Resources.Load("Player Death"), position, Quaternion.identity);
 
-			// apply gravity before moving
-			entity.Velocity.y += entity.Gravity * Time.deltaTime;
+            await UniTask.Delay(500);
 
-			// if holding down bump up our movement amount and turn off one way platform detection for a frame.
-			// this lets us jump down through one way platforms
-			if (entity.Controller.isGrounded && _confirmWasPressedThisFrame && moveInput.y < 0f)
-			{
-				entity.Controller.fallingThroughPlatformTimestamp = Time.time + 0.2f;
-			}
+            _fsm.Fire(GameFSM.Triggers.Lost);
+        }
 
-			if (entity.Velocity.y < 0 && Time.time < entity.Controller.fallingThroughPlatformTimestamp)
-			{
-				// entity.Velocity.y *= entity.Gravity * Time.deltaTime;
-				entity.Controller.ignoreOneWayPlatformsThisFrame = true;
-			}
+        private void HandleInput(Entity entity)
+        {
+            var moveInput = _controls.Gameplay.Move.ReadValue<Vector2>();
 
-			entity.Controller.move(entity.Velocity * Time.deltaTime);
+            if (entity.Controller.isGrounded)
+            {
+                entity.Velocity.y = 0;
+            }
 
-			// grab our current entity.Velocity to use as a base for all calculations
-			entity.Velocity = entity.Controller.velocity;
-		}
-	}
+            var hits = Physics2D.OverlapCircleAll(entity.transform.position, entity.DetectionRadius);
+
+            foreach (var hit in hits)
+            {
+                if (hit.CompareTag("Killbox"))
+                {
+                    UnityEngine.Debug.Log("Player killed");
+                    Defeat();
+                    break;
+                }
+            }
+
+            if (Time.time >= entity.AnimationTimestamp)
+            {
+                if (_cancelWasPressedThisFrame)
+                {
+                    foreach (var hit in hits)
+                    {
+                        if (entity.RopeIndex == -1 && hit.CompareTag("Rope Tip"))
+                        {
+                            var ropeIndex = _state.Ropes.ToList().FindIndex(rope => hit.transform.root.gameObject == rope);
+                            _state.RopeTargets[ropeIndex] = entity.transform;
+                            entity.RopeIndex = ropeIndex;
+                            hit.transform.gameObject.SetActive(false);
+
+                            break;
+                        }
+
+                        if (entity.RopeIndex > -1 && hit.CompareTag("Bird"))
+                        {
+                            // UnityEngine.Debug.Log("attach: " + _state.Ropes[_state.CurrentRopeIndex] + " -> " + hit.transform);
+                            var hitEntity = hit.transform.GetComponentInChildren<Entity>();
+                            if (hitEntity && hitEntity.Captured == false)
+                            {
+                                _state.RopeTargets[entity.RopeIndex] = hit.transform;
+                                hitEntity.Captured = true;
+
+                                if (_state.Score < MAX_SCORE)
+                                {
+                                    _state.Score += 1;
+                                }
+
+                                if (entity.RopeIndex < _state.Ropes.Length - 1)
+                                {
+                                    entity.RopeIndex = -1;
+                                }
+
+                                entity.RopeIndex = -1;
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                if (moveInput.x > 0f)
+                {
+                    entity.NormalizedHorizontalSpeed = 1;
+                    if (entity.transform.localScale.x < 0f)
+                    {
+                        entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
+                    }
+
+                    if (entity.Controller.isGrounded)
+                    {
+                        entity.Animator?.Play(Animator.StringToHash("Run"));
+                        // if (Time.time > _stepSoundTimestamp)
+                        // {
+                        //     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
+                        //     entity.AudioSource.clip = clip;
+                        //     entity.AudioSource.Play();
+                        //     _stepSoundTimestamp = Time.time + 0.2f;
+                        // }
+                    }
+                }
+                else if (moveInput.x < 0f)
+                {
+                    entity.NormalizedHorizontalSpeed = -1;
+                    if (entity.transform.localScale.x > 0f)
+                    {
+                        entity.transform.localScale = new Vector3(-entity.transform.localScale.x, entity.transform.localScale.y, entity.transform.localScale.z);
+                    }
+
+                    if (entity.Controller.isGrounded)
+                    {
+                        entity.Animator?.Play(Animator.StringToHash("Run"));
+                        // if (Time.time > _stepSoundTimestamp)
+                        // {
+                        //     var clip = _config.FootstepClips[UnityEngine.Random.Range(0, _config.FootstepClips.Length)];
+                        //     entity.AudioSource.clip = clip;
+                        //     entity.AudioSource.Play();
+                        //     _stepSoundTimestamp = Time.time + 0.2f;
+                        // }
+                    }
+                }
+                else
+                {
+                    entity.NormalizedHorizontalSpeed = 0;
+
+                    if (entity.Controller.isGrounded)
+                    {
+                        entity.Animator?.Play(Animator.StringToHash("Idle"));
+                    }
+                }
+
+                // JUMP or Go down a platform
+                if (_confirmWasPressedThisFrame && entity.Controller.isGrounded && moveInput.y >= 0f)
+                {
+                    entity.Velocity.y = Mathf.Sqrt(2f * entity.JumpHeight * -entity.Gravity);
+                    // _audioPlayer.PlaySoundEffect(_config.JumpClip, entity.transform.position, 0.4f);
+                    entity.Animator?.Play(Animator.StringToHash("Jump"));
+                }
+
+                // apply horizontal speed smoothing it. dont really do this with Lerp. Use SmoothDamp or something that provides more control
+                var smoothedMovementFactor = entity.Controller.isGrounded ? entity.GroundDamping : entity.InAirDamping; // how fast do we change direction?
+                entity.Velocity.x = Mathf.Lerp(entity.Velocity.x, entity.NormalizedHorizontalSpeed * entity.MoveSpeed, Time.deltaTime * smoothedMovementFactor);
+            }
+            else
+            {
+                entity.Velocity.x = 0;
+            }
+
+            if (entity.Velocity.y < 0)
+            {
+                entity.Animator?.Play(Animator.StringToHash("Fall"));
+            }
+
+            // apply gravity before moving
+            entity.Velocity.y += entity.Gravity * Time.deltaTime;
+
+            // if holding down bump up our movement amount and turn off one way platform detection for a frame.
+            // this lets us jump down through one way platforms
+            if (entity.Controller.isGrounded && _confirmWasPressedThisFrame && moveInput.y < 0f)
+            {
+                entity.Controller.fallingThroughPlatformTimestamp = Time.time + 0.2f;
+            }
+
+            if (entity.Velocity.y < 0 && Time.time < entity.Controller.fallingThroughPlatformTimestamp)
+            {
+                // entity.Velocity.y *= entity.Gravity * Time.deltaTime;
+                entity.Controller.ignoreOneWayPlatformsThisFrame = true;
+            }
+
+            entity.Controller.move(entity.Velocity * Time.deltaTime);
+
+            // grab our current entity.Velocity to use as a base for all calculations
+            entity.Velocity = entity.Controller.velocity;
+        }
+    }
 }

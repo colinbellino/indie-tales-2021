@@ -63,7 +63,10 @@ namespace Game.Core
 
 		private void PlayButtonClip()
 		{
-			_audioPlayer.PlaySoundEffect(_config.MenuConfirmClip);
+			if (_config.MenuConfirmClip)
+			{
+				_audioPlayer.PlaySoundEffect(_config.MenuConfirmClip);
+			}
 		}
 
 		public void ShowDebug() { _debugRoot.SetActive(true); }
@@ -90,8 +93,10 @@ namespace Game.Core
 		}
 		public void HidePause() { _pauseRoot.SetActive(false); }
 
-		public async UniTask ShowVictory()
+		public async UniTask ShowVictory(string text)
 		{
+			_victoryText.text = text;
+
 			await FadeInPanel(_victoryPanel, _victoryText, 0.5f);
 
 			EventSystem.current.SetSelectedGameObject(null);
@@ -141,7 +146,10 @@ namespace Game.Core
 
 			await UniTask.Delay(TimeSpan.FromSeconds(duration));
 
-			_ = _audioPlayer.PlaySoundEffect(_config.MenuTextAppearClip);
+			if (_config.MenuTextAppearClip)
+			{
+				_ = _audioPlayer.PlaySoundEffect(_config.MenuTextAppearClip);
+			}
 
 			var totalInvisibleCharacters = text.textInfo.characterCount;
 			var counter = 0;

@@ -48,23 +48,29 @@ MonoBehaviour:
   Rigidbody: {fileID: 0}
   Controller: {fileID: 0}
   Animator: {fileID: 4848168835003693218}
+  SpriteRenderer: {fileID: 4848168835003693221}
   AudioSource: {fileID: 0}
   Gravity: -25
-  MoveSpeed: 1
+  MoveSpeed: 0.5
   GroundDamping: 20
   InAirDamping: 5
   JumpHeight: 3
-  DetectionRadius: 5
-  FleeDelay: 0.3
+  DetectionRadius: 1
+  FleeDelay: 0.2
+  LeaveDelay: 5
+  FleeSpeedMultiplier: 0.5
   ControlledByAI: 1
   Velocity: {x: 0, y: 0, z: 0}
   NormalizedHorizontalSpeed: 0
   AnimationTimestamp: 0
   MoveDestination: {x: 0, y: 0, z: 0}
+  StartPosition: {x: 0, y: 0, z: 0}
   SpawnTimestamp: 0
   FleeTimestamp: 0
   StartMoveTimestamp: 0
   Moving: 0
+  Captured: 0
+  RopeIndex: -1
   AIState: 0
 --- !u!61 &5899687242276194126
 BoxCollider2D:
@@ -104,7 +110,7 @@ GameObject:
   - component: {fileID: 4848168835003693221}
   - component: {fileID: 4848168835003693218}
   m_Layer: 10
-  m_Name: Square
+  m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -118,7 +124,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4848168835003693219}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.088, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4848168834974746389}
@@ -161,10 +167,10 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1002452121
+  m_SortingLayer: 1
   m_SortingOrder: 0
-  m_Sprite: {fileID: 2157240733274199957, guid: 76643583110f3b24194c6d7240b82309, type: 3}
+  m_Sprite: {fileID: -1003611147729200227, guid: 1474bca55edf341b682fe9ee40f32421, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -185,7 +191,7 @@ Animator:
   m_GameObject: {fileID: 4848168835003693219}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: f4d4f6145973e479db63f84f50378b4c, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

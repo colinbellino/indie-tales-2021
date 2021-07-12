@@ -1,8 +1,8 @@
-using Cysharp.Threading.Tasks;
-using UnityEngine;
-using Game.Inputs;
-using UnityEngine.Tilemaps;
 using System;
+using Cysharp.Threading.Tasks;
+using Game.Inputs;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace Game.Core
 {
@@ -14,17 +14,14 @@ namespace Game.Core
 			return true;
 #endif
 
+			if (Debug.isDebugBuild)
+			{
+				return true;
+			}
+
 #pragma warning disable 162
 			return false;
 #pragma warning restore 162
-		}
-
-		public static Vector3 GetMouseWorldPosition(GameControls controls, Camera camera)
-		{
-			var mousePosition = controls.Gameplay.MousePosition.ReadValue<Vector2>();
-			var mouseWorldPosition = camera.ScreenToWorldPoint(mousePosition);
-			mouseWorldPosition.z = 0f;
-			return mouseWorldPosition;
 		}
 
 		public static ParticleSystem SpawnEffect(ParticleSystem effectPrefab, Vector3 position)
