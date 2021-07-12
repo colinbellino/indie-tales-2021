@@ -18,6 +18,10 @@ namespace Game.Core.StateMachines.Game
 			_state.InitialMusicVolume = _state.CurrentMusicVolume = _config.MusicVolume;
 			_state.InitialSoundVolume = _state.CurrentSoundVolume = _config.SoundVolume;
 
+			_ui.PauseButton1.onClick.AddListener(ToggleSounds);
+			_ui.PauseButton2.onClick.AddListener(ToggleMusic);
+			_ui.PauseButton4.onClick.AddListener(ToggleAssistMode);
+
 			Time.timeScale = 1f;
 
 			if (IsDevBuild())
@@ -38,6 +42,28 @@ namespace Game.Core.StateMachines.Game
 			}
 
 			_fsm.Fire(GameFSM.Triggers.Done);
+		}
+
+		private void ToggleSounds()
+		{
+			var isOn = _state.CurrentSoundVolume == _state.InitialSoundVolume;
+			_state.CurrentSoundVolume = isOn ? 0f : _state.InitialSoundVolume;
+			_audioPlayer.SetSoundVolume(_state.CurrentSoundVolume);
+			_ui.PauseButton1.GetComponentInChildren<TMPro.TMP_Text>().text = "Sound: " + (isOn ? "OFF" : "ON");
+		}
+
+		private void ToggleMusic()
+		{
+			var isOn = _state.CurrentMusicVolume == _state.InitialMusicVolume;
+			_state.CurrentMusicVolume = isOn ? 0f : _state.InitialMusicVolume;
+			_audioPlayer.SetMusicVolume(_state.CurrentMusicVolume);
+			_ui.PauseButton2.GetComponentInChildren<TMPro.TMP_Text>().text = "Music: " + (isOn ? "OFF" : "ON");
+		}
+
+		private void ToggleAssistMode()
+		{
+			_state.AssistMode = !_state.AssistMode;
+			_ui.PauseButton4.GetComponentInChildren<TMPro.TMP_Text>().text = "Assist mode: " + (!_state.AssistMode ? "OFF" : "ON");
 		}
 	}
 }

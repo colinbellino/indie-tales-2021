@@ -49,6 +49,17 @@ namespace Game.Inputs
                     ""action"": ""Pause"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2c9d3d3f-1d9e-4751-b3a3-f01fc91b558c"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -79,14 +90,6 @@ namespace Game.Inputs
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": ""Press(behavior=1)""
-                },
-                {
-                    ""name"": ""Mouse Position"",
-                    ""type"": ""Value"",
-                    ""id"": ""5f88aa2d-5d18-4935-bd3e-c1dec0958914"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -224,17 +227,6 @@ namespace Game.Inputs
                 },
                 {
                     ""name"": """",
-                    ""id"": ""4aeb101d-00ce-4fa7-a979-342d991139cc"",
-                    ""path"": ""<Keyboard>/enter"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Confirm"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""ffdd3a0d-6e79-4f95-87cc-594d5383470f"",
                     ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
@@ -252,28 +244,6 @@ namespace Game.Inputs
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Confirm"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""91c539a2-d15f-47d4-bda0-db6d688c19fd"",
-                    ""path"": ""<Keyboard>/upArrow"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Confirm"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""2d6e55a6-6885-420b-9806-433449fb0282"",
-                    ""path"": ""<Mouse>/position"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Mouse Position"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -298,28 +268,6 @@ namespace Game.Inputs
                     ""action"": ""Cancel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8c8fbe6d-d66f-4bf5-94ee-5e7dce892acb"",
-                    ""path"": ""<Keyboard>/shift"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Cancel"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""ce2330a3-d708-4713-a5d5-e1bbdbecba74"",
-                    ""path"": ""<Keyboard>/downArrow"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Cancel"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -334,7 +282,6 @@ namespace Game.Inputs
             m_Gameplay_Move = m_Gameplay.FindAction("Move", throwIfNotFound: true);
             m_Gameplay_Confirm = m_Gameplay.FindAction("Confirm", throwIfNotFound: true);
             m_Gameplay_Cancel = m_Gameplay.FindAction("Cancel", throwIfNotFound: true);
-            m_Gameplay_MousePosition = m_Gameplay.FindAction("Mouse Position", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -430,7 +377,6 @@ namespace Game.Inputs
         private readonly InputAction m_Gameplay_Move;
         private readonly InputAction m_Gameplay_Confirm;
         private readonly InputAction m_Gameplay_Cancel;
-        private readonly InputAction m_Gameplay_MousePosition;
         public struct GameplayActions
         {
             private @GameControls m_Wrapper;
@@ -438,7 +384,6 @@ namespace Game.Inputs
             public InputAction @Move => m_Wrapper.m_Gameplay_Move;
             public InputAction @Confirm => m_Wrapper.m_Gameplay_Confirm;
             public InputAction @Cancel => m_Wrapper.m_Gameplay_Cancel;
-            public InputAction @MousePosition => m_Wrapper.m_Gameplay_MousePosition;
             public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -457,9 +402,6 @@ namespace Game.Inputs
                     @Cancel.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCancel;
                     @Cancel.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCancel;
                     @Cancel.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCancel;
-                    @MousePosition.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnMousePosition;
-                    @MousePosition.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnMousePosition;
-                    @MousePosition.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnMousePosition;
                 }
                 m_Wrapper.m_GameplayActionsCallbackInterface = instance;
                 if (instance != null)
@@ -473,9 +415,6 @@ namespace Game.Inputs
                     @Cancel.started += instance.OnCancel;
                     @Cancel.performed += instance.OnCancel;
                     @Cancel.canceled += instance.OnCancel;
-                    @MousePosition.started += instance.OnMousePosition;
-                    @MousePosition.performed += instance.OnMousePosition;
-                    @MousePosition.canceled += instance.OnMousePosition;
                 }
             }
         }
@@ -489,7 +428,6 @@ namespace Game.Inputs
             void OnMove(InputAction.CallbackContext context);
             void OnConfirm(InputAction.CallbackContext context);
             void OnCancel(InputAction.CallbackContext context);
-            void OnMousePosition(InputAction.CallbackContext context);
         }
     }
 }

@@ -11,7 +11,7 @@ public class RopeBridge : MonoBehaviour
     private List<RopeSegment> ropeSegments = new List<RopeSegment>();
     private float ropeSegLen = 0.25f;
     private int segmentLength = 35;
-    private float lineWidth = 0.1f;
+    private float lineWidth = 0.05f;
 
     // Use this for initialization
     void Start()

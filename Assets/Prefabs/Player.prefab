@@ -335,15 +335,20 @@ MonoBehaviour:
   JumpHeight: 2.3
   DetectionRadius: 1
   FleeDelay: 0.5
+  LeaveDelay: 5
+  FleeSpeedMultiplier: 0.5
   ControlledByAI: 0
   Velocity: {x: 0, y: 0, z: 0}
   NormalizedHorizontalSpeed: 0
   AnimationTimestamp: 0
   MoveDestination: {x: 0, y: 0, z: 0}
+  StartPosition: {x: 0, y: 0, z: 0}
   SpawnTimestamp: 0
   FleeTimestamp: 0
   StartMoveTimestamp: 0
   Moving: 0
+  Captured: 0
+  RopeIndex: -1
   AIState: 0
 --- !u!114 &10444681
 MonoBehaviour:
