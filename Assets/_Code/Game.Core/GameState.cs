@@ -18,5 +18,6 @@ namespace Game.Core
 		public int BirdDoneCount;
 		public bool Running;
 		public bool AssistMode;
+		public float StepSoundTimestamp;
 	}
 }

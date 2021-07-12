@@ -22,5 +22,7 @@ namespace Game.Core
 		public AudioClip MenuTextAppearClip;
 		public AudioClip MenuConfirmClip;
 		public AudioClip PlayerDeathClip;
+		public AudioClip CaptureClip;
+		public AudioClip[] FootstepClips;
 	}
 }
