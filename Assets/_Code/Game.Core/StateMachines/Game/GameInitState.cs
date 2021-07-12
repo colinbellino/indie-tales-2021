@@ -20,6 +20,7 @@ namespace Game.Core.StateMachines.Game
 
 			_ui.PauseButton1.onClick.AddListener(ToggleSounds);
 			_ui.PauseButton2.onClick.AddListener(ToggleMusic);
+			_ui.PauseButton3.onClick.AddListener(QuitGame);
 			_ui.PauseButton4.onClick.AddListener(ToggleAssistMode);
 
 			Time.timeScale = 1f;
@@ -64,6 +65,15 @@ namespace Game.Core.StateMachines.Game
 		{
 			_state.AssistMode = !_state.AssistMode;
 			_ui.PauseButton4.GetComponentInChildren<TMPro.TMP_Text>().text = "Assist mode: " + (!_state.AssistMode ? "OFF" : "ON");
+		}
+
+		private void QuitGame()
+		{
+#if UNITY_EDITOR
+			UnityEditor.EditorApplication.isPlaying = false;
+#else
+			UnityEngine.Application.Quit();
+#endif
 		}
 	}
 }

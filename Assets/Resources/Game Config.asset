@@ -21,7 +21,11 @@ MonoBehaviour:
   PauseAudioSnapshot: {fileID: 6893898828190700123, guid: c00711887b3714031932c58a1ac16396, type: 2}
   MusicVolume: 0.7
   Music1Clip: {fileID: 8300000, guid: a9335854e4be02e4f9b4e7c424a53fc1, type: 3}
-  SoundVolume: 0.7
+  SoundVolume: 0.8
   MenuTextAppearClip: {fileID: 8300000, guid: ea617f6da27fb4c67a099b74da43a20e, type: 3}
   MenuConfirmClip: {fileID: 8300000, guid: 4c1368389c5532e4faa388da887d74e9, type: 3}
   PlayerDeathClip: {fileID: 8300000, guid: bacb24a4ceb3def4ba00d375125b9b8f, type: 3}
+  CaptureClip: {fileID: 8300000, guid: cf8426943345de148938a2a77adb0569, type: 3}
+  FootstepClips:
+  - {fileID: 8300000, guid: e6b378bbd1b046741b2fe30d03cea20f, type: 3}
+  - {fileID: 8300000, guid: 84532a911659ac847be803e9877fc62a, type: 3}
