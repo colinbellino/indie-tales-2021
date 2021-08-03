@@ -1,19 +1,19 @@
-# indie-tales-2021
+# Indie Tales Jam 2021 (Flight)
 
-TODO
+This is the full source code for the game Flight, made in 48 hours for Indie Tales Jam 2021.
+Play at: https://colinbellino.itch.io/flight
 
 ## Credits:
 
 - **Art:** Laura De Pascale (https://www.lauradp.work | https://twitter.com/la_depas)
-- **Audio:** TODO
+- **Audio:** Colin Bellino
 - **Paid assets:** No
 
 ## Controls:
-<!-- 
-| Actions | Keyboard                        | Gamepad                |
-| ------- | ------------------------------- | ---------------------- |
-| Move    | WASD, ZQSD or Left/right arrows | D-Pad or Left stick    |
-| Jump    | Space, Enter or Up arrow        | X or Square button (▢) |
-| Dig     | E, Shift, or Down arrow         | A or Cross button (X)  |
-| Pause   | Escape                          | Start button           |
--->
+
+| Actions       | Keyboard                        | Gamepad                |
+| ------------- | ------------------------------- | ---------------------- |
+| Move          | WASD, ZQSD or Left/right arrows | D-Pad or Left stick    |
+| Jump          | Space key                       | A or Cross button (X)  |
+| Interact      | E key                           | X or Square button (▢) |
+| Pause/Options | Escape key                 | Start button           |
