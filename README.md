@@ -1,6 +1,7 @@
 # Indie Tales Jam 2021 (Flight)
 
 This is the full source code for the game Flight, made in 48 hours for Indie Tales Jam 2021.
+
 Play at: https://colinbellino.itch.io/flight
 
 ## Credits:
