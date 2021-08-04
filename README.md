@@ -18,3 +18,5 @@ Play at: https://colinbellino.itch.io/flight
 | Jump          | Space key                       | A or Cross button (X)  |
 | Interact      | E key                           | X or Square button (▢) |
 | Pause/Options | Escape key                 | Start button           |
+
+![CFMEJL](https://user-images.githubusercontent.com/622180/128102969-82746e2f-3563-4126-9956-68aa34fbb538.png)
